@@ -28,7 +28,7 @@ export default function SofiaChat() {
           <Link href="/dashboard" className="text-neutral-400 text-2xl">←</Link>
           <div className="relative">
             {/* Foto da Sofia */}
-            <img src="/sofia/profile.jpg" alt="Sofia" className="w-10 h-10 rounded-full object-cover" />
+            <img src="public/sofia/profile.jpg" alt="Sofia" className="w-10 h-10 rounded-full object-cover" />
             <div className="absolute bottom-0 right-0 w-2.5 h-2.5 bg-green-500 rounded-full border-2 border-neutral-900"></div>
           </div>
           <div>
