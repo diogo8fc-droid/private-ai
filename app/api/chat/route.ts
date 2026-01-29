@@ -1,12 +1,14 @@
 import { OpenAIStream, StreamingTextResponse } from 'ai';
 import OpenAI from 'openai';
 
-// Configuração do cliente
+export const runtime = 'edge';
+
+// Configuração da OpenAI
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
 });
 
-// --- PERSONALIDADES ---
+// --- DICIONÁRIO DE PERSONALIDADES ---
 const personalities: Record<string, string> = {
   beatriz: `
     Tu és a Beatriz, 22 anos, estudante de Belas Artes.
@@ -24,25 +26,26 @@ const personalities: Record<string, string> = {
   `
 };
 
-export const runtime = 'edge';
-
 export async function POST(req: Request) {
+  // 1. Receber dados do chat
   const { messages, characterName } = await req.json();
-  const nameKey = characterName?.toLowerCase() || 'beatriz';
-  const systemPrompt = personalities[nameKey];
 
+  // 2. Escolher a personalidade (AQUI ESTAVA O ERRO ANTES)
+  const nameKey = characterName?.toLowerCase() || 'beatriz';
+  const systemPrompt = personalities[nameKey] || personalities.beatriz;
+
+  // 3. Pedir resposta à AI
   const response = await openai.chat.completions.create({
     model: 'gpt-4o-mini',
     stream: true,
     messages: [
-      { role: 'system', content: systemPrompt },
+      { role: 'system', content: systemPrompt }, // Agora ele já sabe o que é isto
       ...messages
     ],
   });
 
-  // Se o erro persistir, o TypeScript vai reclamar aqui, mas vai funcionar
-  const stream = OpenAIStream(response);
+  // 4. Criar o stream (Com o truque "as any" para corrigir o erro da Azure)
+  const stream = OpenAIStream(response as any);
   
-  // @ts-ignore (Isto força o TypeScript a ignorar o erro nesta linha específica)
   return new StreamingTextResponse(stream);
 }
