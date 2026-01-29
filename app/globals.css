@@ -1,0 +1,50 @@
+@import "tailwindcss";
+
+@theme {
+  /* Aqui definimos as tuas cores premium diretamente no motor da v4 */
+  --color-premium-gold: #D4AF37;
+  --color-premium-purple: #7c3aed;
+  
+  /* Animações */
+  --animate-float: float 3s ease-in-out infinite;
+
+  @keyframes float {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-10px); }
+  }
+}
+
+/* Em vez de @apply, usamos CSS puro ou variáveis de tema para evitar erros */
+:root {
+  background: #050505;
+  color: white;
+}
+
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+}
+::-webkit-scrollbar-track {
+  background: #050505;
+}
+::-webkit-scrollbar-thumb {
+  background: #262626;
+  border-radius: 10px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #7c3aed;
+}
+
+/* Utilitários Customizados */
+.text-gradient {
+  background: linear-gradient(to right, #a78bfa, #db2777);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  font-weight: 900;
+}
+
+.glass-card {
+  background: rgba(255, 255, 255, 0.05);
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
