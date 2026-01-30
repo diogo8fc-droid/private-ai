@@ -1,14 +1,13 @@
 import "./globals.css";
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
-import AgeGate from "./components/AgeGate";
-import Footer from "./components/Footer";
+import AgeGate from "./components/AgeGate"; // <--- 1. IMPORTA AQUI
 
 const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: "Private AI - Exclusive AI Companions",
-  description: "Chat with realistic AI models.",
+  title: "Private AI",
+  description: "Exclusive AI Companions",
 };
 
 export default function RootLayout({
@@ -18,20 +17,9 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en">
-      {/* Adicionamos 'flex flex-col min-h-screen' para empurrar o footer para baixo */}
-      <body className={`${inter.className} flex flex-col min-h-screen bg-black`}>
-        
-        {/* O Aviso +18 (Fica por cima de tudo) */}
-        <AgeGate /> 
-        
-        {/* O Conteúdo das Páginas (Cresce para ocupar espaço) */}
-        <div className="flex-grow">
-          {children}
-        </div>
-
-        {/* O Rodapé (Fica sempre no fundo) */}
-        <Footer />
-        
+      <body className={inter.className}>
+        <AgeGate /> {/* <--- 2. ADICIONA ISTO AQUI, ANTES DO CHILDREN */}
+        {children}
       </body>
     </html>
   );

@@ -1,40 +1,32 @@
-import Image from 'next/image';
+'use client';
 
+// 1. Definimos que este componente aceita um texto chamado "model"
 interface GalleryProps {
-  images: string[];
-  isLocked: boolean; // Nova propriedade para saber se bloqueia ou não
+  model: string; 
 }
 
-export default function Gallery({ images, isLocked }: GalleryProps) {
-  return (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 p-4">
-      {images.map((img, index) => (
-        <div key={index} className="relative aspect-[3/4] w-full overflow-hidden rounded-xl shadow-lg hover:scale-105 transition-transform duration-300 bg-gray-800">
-          
-          {/* A Imagem em si */}
-          <Image
-            src={img}
-            alt={`Foto ${index + 1}`}
-            fill
-            className={`object-cover transition-all duration-700 ${
-              isLocked ? 'blur-xl scale-110 opacity-50' : 'blur-0 scale-100 opacity-100'
-            }`}
-            sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-          />
+export default function Gallery({ model }: GalleryProps) {
+  
+  // Lista de 6 "espaços" para fotos
+  const photos = [1, 2, 3, 4, 5, 6];
 
-          {/* O Cadeado (Só aparece se estiver bloqueado) */}
-          {isLocked && (
-            <div className="absolute inset-0 flex flex-col items-center justify-center z-10">
-              <div className="bg-black/50 p-4 rounded-full backdrop-blur-sm border border-white/20">
-                {/* Ícone de Cadeado SVG simples */}
-                <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
-                  <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
-                </svg>
-              </div>
-              <span className="mt-2 text-xs font-bold uppercase tracking-widest text-white/80">Premium</span>
-            </div>
-          )}
+  return (
+    <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
+      {photos.map((index) => (
+        <div 
+          key={index} 
+          className="relative aspect-[3/4] bg-neutral-800 rounded-lg overflow-hidden border border-white/5"
+        >
+          {/* Truque de Segurança:
+             Tenta carregar a imagem da pasta /public/beatriz/1.jpg, 2.jpg...
+             Se não tiveres essas fotos numeradas, ele vai usar a profile.jpg 
+             para não dar erro e a galeria ficar bonita na mesma.
+          */}
+          <img
+            src={`/${model}/profile.jpg`} 
+            alt={`Foto ${index} de ${model}`}
+            className="w-full h-full object-cover hover:scale-110 transition-transform duration-700 ease-in-out"
+          />
         </div>
       ))}
     </div>

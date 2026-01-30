@@ -1,138 +1,148 @@
 'use client';
 
 import { useState, useRef, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 
-export default function ChatWindow() {
-  const [isOpen, setIsOpen] = useState(false);
-  const [messages, setMessages] = useState([
-    { role: 'assistant', text: 'Olá! Sou a Sofia. Estava à tua espera... 😉' }
-  ]);
+interface ChatWindowProps {
+  modelId: string; // 'beatriz' ou 'sofia'
+}
+
+interface Message {
+  role: 'user' | 'ai';
+  content: string;
+}
+
+export default function ChatWindow({ modelId }: ChatWindowProps) {
+  const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState('');
-  const [isLoading, setIsLoading] = useState(false);
+  const [loading, setLoading] = useState(false);
+  
+  // Ref para fazer scroll automático para baixo
   const messagesEndRef = useRef<HTMLDivElement>(null);
-  const router = useRouter();
 
-  // Auto-scroll
+  const scrollToBottom = () => {
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  };
+
   useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    scrollToBottom();
   }, [messages]);
 
-  const handleSend = async () => {
-    if (!input.trim() || isLoading) return;
+  // Configuração visual baseada na modelo
+  const config = modelId === 'beatriz' 
+    ? { name: 'Beatriz', color: 'text-purple-500', border: 'border-purple-500', bg: 'bg-purple-600' }
+    : { name: 'Sofia', color: 'text-red-500', border: 'border-red-500', bg: 'bg-red-600' };
 
-    // 1. Mostrar mensagem do utilizador
-    const userMsg = { role: 'user', text: input };
-    setMessages((prev) => [...prev, userMsg]);
+  const handleSend = async () => {
+    if (!input.trim()) return;
+
+    // 1. Adiciona a mensagem do utilizador ao ecrã
+    const userMsg = input;
+    setMessages(prev => [...prev, { role: 'user', content: userMsg }]);
     setInput('');
-    setIsLoading(true);
+    setLoading(true);
 
     try {
-      // 2. Enviar para a API Robusta
-      const response = await fetch('/api/chat', {
+      // 2. Envia para o nosso Backend (Passo 1)
+      const res = await fetch('/api/chat', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ message: input }),
+        body: JSON.stringify({ message: userMsg, modelId }),
       });
 
-      // 3. Se der erro de Autenticação (401)
-      if (response.status === 401) {
-        setMessages((prev) => [
-          ...prev, 
-          { role: 'assistant', text: '🔒 Desculpa, precisas de ter conta para falarmos.' }
-        ]);
-        // Opcional: Redirecionar logo para o login
-        setTimeout(() => router.push('/login'), 2000);
-        return;
-      }
+      const data = await res.json();
 
-      if (!response.ok) throw new Error('Erro na API');
-
-      const data = await response.json();
-
-      // 4. Mostrar resposta da Ana/Sofia
+      // 3. Adiciona a resposta da IA ao ecrã
       if (data.reply) {
-        setMessages((prev) => [
-          ...prev, 
-          { role: 'assistant', text: data.reply }
-        ]);
+        setMessages(prev => [...prev, { role: 'ai', content: data.reply }]);
       }
 
     } catch (error) {
-      console.error('Erro:', error);
-      setMessages((prev) => [
-        ...prev, 
-        { role: 'assistant', text: 'Fiquei sem rede... tenta outra vez.' }
-      ]);
-    } finally {
-      setIsLoading(false);
+      console.error(error);
+      setMessages(prev => [...prev, { role: 'ai', content: "Ups, perdi a ligação... tenta outra vez." }]);
     }
+
+    setLoading(false);
   };
 
   return (
-    <div className="fixed bottom-6 right-6 z-50 flex flex-col items-end">
-      {isOpen && (
-        <div className="mb-4 w-80 h-96 bg-gray-900 border border-gray-700 rounded-2xl shadow-2xl flex flex-col overflow-hidden animate-in slide-in-from-bottom-5 fade-in duration-300">
-          {/* Header */}
-          <div className="bg-pink-600 p-4 flex justify-between items-center">
-            <div className="flex items-center gap-2">
-              <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
-              <span className="font-bold text-white">Sofia M.</span>
-            </div>
-            <button onClick={() => setIsOpen(false)} className="text-white/80 hover:text-white">✕</button>
+    <div className="flex flex-col h-screen bg-black text-white">
+      
+      {/* HEADER DO CHAT */}
+      <div className="flex items-center justify-between p-4 border-b border-white/10 bg-neutral-900/50 backdrop-blur-md fixed top-0 w-full z-50">
+        <div className="flex items-center gap-3">
+          <Link href={`/models/${modelId}`} className="text-neutral-400 hover:text-white text-sm">
+            ← Voltar
+          </Link>
+          <div className={`relative w-10 h-10 rounded-full overflow-hidden border-2 ${config.border}`}>
+            <img src={`/${modelId}/profile.jpg`} className="w-full h-full object-cover" />
           </div>
-
-          {/* Messages Area */}
-          <div className="flex-1 p-4 overflow-y-auto space-y-3 bg-gray-950">
-            {messages.map((msg, idx) => (
-              <div key={idx} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
-                <div className={`max-w-[80%] p-3 rounded-2xl text-sm ${
-                  msg.role === 'user' 
-                    ? 'bg-pink-600 text-white rounded-tr-none' 
-                    : 'bg-gray-800 text-gray-200 rounded-tl-none border border-gray-700'
-                }`}>
-                  {msg.text}
-                </div>
-              </div>
-            ))}
-            {isLoading && (
-              <div className="flex justify-start">
-                 <div className="bg-gray-800 p-3 rounded-2xl rounded-tl-none text-gray-400 text-xs italic">
-                   A escrever...
-                 </div>
-              </div>
-            )}
-            <div ref={messagesEndRef} />
-          </div>
-
-          {/* Input */}
-          <div className="p-3 bg-gray-900 border-t border-gray-800 flex gap-2">
-            <input
-              type="text"
-              value={input}
-              onChange={(e) => setInput(e.target.value)}
-              onKeyDown={(e) => e.key === 'Enter' && handleSend()}
-              placeholder="Escreve uma mensagem..."
-              className="flex-1 bg-gray-800 text-white text-sm rounded-full px-4 py-2 focus:outline-none focus:ring-2 focus:ring-pink-500"
-              disabled={isLoading}
-            />
-            <button 
-              onClick={handleSend}
-              disabled={isLoading}
-              className="bg-pink-600 hover:bg-pink-700 text-white p-2 rounded-full transition-colors disabled:opacity-50"
-            >
-              ➤
-            </button>
+          <div>
+            <h2 className="font-bold text-sm">{config.name}</h2>
+            <p className="text-[10px] text-green-500 font-bold uppercase tracking-wider flex items-center gap-1">
+              <span className="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse"></span> Online
+            </p>
           </div>
         </div>
-      )}
+      </div>
 
-      <button 
-        onClick={() => setIsOpen(!isOpen)}
-        className="w-14 h-14 bg-pink-600 hover:bg-pink-500 text-white rounded-full shadow-lg flex items-center justify-center transition-all hover:scale-110 active:scale-95"
-      >
-        {isOpen ? '✕' : '💬'}
-      </button>
+      {/* ÁREA DAS MENSAGENS */}
+      <div className="flex-1 overflow-y-auto pt-20 pb-24 px-4 space-y-4">
+        
+        {/* Mensagem de Boas Vindas Automática */}
+        {messages.length === 0 && (
+          <div className="text-center text-neutral-500 text-xs mt-10">
+            Começa a conversa com a {config.name}...
+          </div>
+        )}
+
+        {messages.map((msg, idx) => (
+          <div key={idx} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
+            <div className={`max-w-[80%] p-3 rounded-2xl text-sm ${
+              msg.role === 'user' 
+                ? 'bg-neutral-800 text-white rounded-tr-none' 
+                : `${config.bg} text-white rounded-tl-none`
+            }`}>
+              {msg.content}
+            </div>
+          </div>
+        ))}
+
+        {/* Indicador de "A escrever..." */}
+        {loading && (
+          <div className="flex justify-start animate-pulse">
+            <div className={`bg-neutral-900 text-neutral-400 p-3 rounded-2xl text-xs rounded-tl-none border border-white/10`}>
+              a escrever...
+            </div>
+          </div>
+        )}
+        <div ref={messagesEndRef} />
+      </div>
+
+      {/* INPUT BAR */}
+      <div className="fixed bottom-0 w-full bg-black border-t border-white/10 p-4">
+        <div className="relative max-w-4xl mx-auto flex items-center gap-2">
+          <input
+            type="text"
+            value={input}
+            onChange={(e) => setInput(e.target.value)}
+            onKeyDown={(e) => e.key === 'Enter' && handleSend()}
+            placeholder="Escreve uma mensagem..."
+            className="w-full bg-neutral-900 border border-white/10 rounded-full py-3 px-5 text-sm focus:outline-none focus:border-white/30 transition"
+            disabled={loading}
+          />
+          <button 
+            onClick={handleSend}
+            disabled={loading}
+            className={`p-3 rounded-full ${config.bg} text-white hover:opacity-90 transition disabled:opacity-50`}
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="w-5 h-5">
+              <path d="M3.478 2.405a.75.75 0 00-.926.94l2.432 7.905H13.5a.75.75 0 010 1.5H4.984l-2.432 7.905a.75.75 0 00.926.94 60.519 60.519 0 0018.445-8.986.75.75 0 000-1.218A60.517 60.517 0 003.478 2.405z" />
+            </svg>
+          </button>
+        </div>
+      </div>
+
     </div>
   );
 }

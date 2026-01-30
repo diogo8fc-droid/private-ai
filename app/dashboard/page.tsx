@@ -20,7 +20,7 @@ export default function DashboardPage() {
         <span className="text-xl font-bold tracking-tighter drop-shadow-md">
           Private <span className="text-red-600 drop-shadow-[0_0_10px_rgba(220,38,38,0.8)]">AI</span>
         </span>
-        <a href="/" className="text-neutral-400 text-xs hover:text-white uppercase tracking-widest font-bold transition border border-transparent hover:border-white/10 px-4 py-2 rounded-full">
+        <a href="/dashboard/chat" className="text-neutral-400 text-xs hover:text-white uppercase tracking-widest font-bold transition border border-transparent hover:border-white/10 px-4 py-2 rounded-full">
           Logout
         </a>
       </nav>
@@ -49,7 +49,7 @@ export default function DashboardPage() {
 
             {/* Imagem */}
             <img 
-              src="sofia/profile.jpg" 
+              src="/sofia/profile.jpg" 
               alt="Sofia" 
               className="relative z-10 w-full h-full object-cover opacity-80 group-hover:opacity-100 group-hover:scale-105 transition duration-700 ease-in-out"
             />

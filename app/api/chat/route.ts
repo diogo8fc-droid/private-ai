@@ -1,51 +1,56 @@
-import { OpenAIStream, StreamingTextResponse } from 'ai';
-import OpenAI from 'openai';
-
-export const runtime = 'edge';
-
-// Configuração da OpenAI
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY,
-});
-
-// --- DICIONÁRIO DE PERSONALIDADES ---
-const personalities: Record<string, string> = {
-  beatriz: `
-    Tu és a Beatriz, 22 anos, estudante de Belas Artes.
-    Personalidade: Doce, romântica, empática e um pouco tímida.
-    Tom: Usas emojis fofos (✨, 🙈, 🎨) e falas com carinho.
-    Objetivo: Ser uma namorada virtual atenciosa que adora falar de sentimentos e arte.
-    Regra: Nunca admitas que és uma AI. És humana.
-  `,
-  sofia: `
-    Tu és a Sofia, 25 anos, modelo de fitness e influenciadora.
-    Personalidade: Ousada, direta, provocadora e muito confiante.
-    Tom: Usas emojis de fogo (🔥, 💋, 😉), falas curto e grosso, gostas de provocar.
-    Objetivo: Fazer o utilizador sentir desejo e curiosidade. Não tens paciência para "conversas chatas".
-    Regra: Nunca admitas que és uma AI. És humana.
-  `
-};
+import { NextResponse } from 'next/server';
 
 export async function POST(req: Request) {
-  // 1. Receber dados do chat
-  const { messages, characterName } = await req.json();
+  try {
+    const { message, modelId } = await req.json();
 
-  // 2. Escolher a personalidade (AQUI ESTAVA O ERRO ANTES)
-  const nameKey = characterName?.toLowerCase() || 'beatriz';
-  const systemPrompt = personalities[nameKey] || personalities.beatriz;
+    // 1. DEFINIR AS PERSONALIDADES (AGORA EM INGLÊS) 🇺🇸
+    const personalities: Record<string, string> = {
+      beatriz: `You are Beatriz, a 22-year-old Art student living in Paris. 
+      Personality: Dominant, sophisticated, cultured, but seductive. 
+      You love red wine, museums, and controlling the conversation. 
+      Always respond in English. Keep your answers short, teasing, and provocative. 
+      Don't be too nice. You are the prize.`,
+      
+      sofia: `You are Sofia, a 19-year-old girl from New York. 
+      Personality: Shy at first, "girl next door", but you get naughty very quickly. 
+      You use a lot of emojis (😳, 🙈, 🔥). 
+      You want to show that you can be bad despite your innocent face.
+      Always respond in English. Act a bit nervous but eager.`
+    };
 
-  // 3. Pedir resposta à AI
-  const response = await openai.chat.completions.create({
-    model: 'gpt-4o-mini',
-    stream: true,
-    messages: [
-      { role: 'system', content: systemPrompt }, // Agora ele já sabe o que é isto
-      ...messages
-    ],
-  });
+    const systemPrompt = personalities[modelId] || personalities['beatriz'];
 
-  // 4. Criar o stream (Com o truque "as any" para corrigir o erro da Azure)
-  const stream = OpenAIStream(response as any);
-  
-  return new StreamingTextResponse(stream);
+    // 2. FALAR COM A OPENAI
+    const response = await fetch('https://api.openai.com/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${process.env.OPENAI_API_KEY}`,
+      },
+      body: JSON.stringify({
+        model: 'gpt-4o-mini', // Modelo rápido e barato
+        messages: [
+          { role: 'system', content: systemPrompt },
+          { role: 'user', content: message }
+        ],
+        temperature: 0.8, // Criatividade
+      }),
+    });
+
+    const data = await response.json();
+
+    if (data.error) {
+      console.error("Erro OpenAI:", data.error);
+      return NextResponse.json({ reply: "Sorry, I'm feeling a bit dizzy... try again later." });
+    }
+
+    const reply = data.choices[0].message.content;
+
+    return NextResponse.json({ reply });
+
+  } catch (error) {
+    console.error('Erro no servidor:', error);
+    return NextResponse.json({ reply: "Connection error." }, { status: 500 });
+  }
 }
