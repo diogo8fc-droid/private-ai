@@ -8,15 +8,15 @@ import Footer from "./components/Footer";
 const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  // 1. SEO OTIMIZADO (Para apareceres nas pesquisas)
+  // 1. SEO OTIMIZADO
   title: "Private AI - Chat with Virtual Girlfriends",
   description: "Experience the ultimate AI companionship. Chat with Beatriz, Sofia and more. Uncensored, private, and interactive.",
   keywords: ["ai girlfriend", "virtual companion", "ai chat", "nsfw ai", "beatriz ai"],
 
-  // 2. AQUI ENTRA A VERIFICAÇÃO DO GOOGLE
+  // 2. AQUI ENTRA A VERIFICAÇÃO DO GOOGLE (CORRIGIDO)
   verification: {
-    // Apaga o texto abaixo e cola o código estranho que copiaste do Google Search Console
-    google: 'COLA_AQUI_O_TEU_CODIGO_DO_GOOGLE', 
+    // Apenas o código, sem <meta> e sem name=...
+    google: 'KfZRugRLaMScsc7Pd6vUCx0pWh0kGh8Hx9Eh0WIHlRM', 
   },
 };
 
@@ -27,12 +27,10 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en">
-      {/* Adicionei 'flex flex-col min-h-screen' para o Footer ficar sempre em baixo */}
       <body className={`${inter.className} bg-black min-h-screen flex flex-col`}>
         
         <AgeGate /> 
         
-        {/* O 'flex-1' empurra o Footer para o fundo se a página for pequena */}
         <div className="flex-1">
             {children}
         </div>
